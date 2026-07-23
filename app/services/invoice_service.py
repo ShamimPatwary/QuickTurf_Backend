@@ -6,3 +6,13 @@ from app.config import settings
 from app.repositories.booking_repository import BookingRepository
 from app.services.base_service import BaseService
 from app.utils.pdf_generator import generate_invoice_pdf
+
+
+class InvoiceService(BaseService):
+    """Generates and retrieves PDF invoice files for bookings."""
+
+    def __init__(self, db):
+        super().__init__(db)
+        self.booking_repo = BookingRepository(db)
+
+    
