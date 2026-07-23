@@ -15,4 +15,13 @@ class InvoiceService(BaseService):
         super().__init__(db)
         self.booking_repo = BookingRepository(db)
 
-    
+    def get_or_generate_invoice(self, booking_id: int) -> str:
+        booking = self.booking_repo.get_by_id(booking_id)
+        if not booking:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Booking not found")
+
+        file_path = os.path.join(settings.UPLOAD_DIR, "invoices", f"invoice_{booking.id}.pdf")
+        if not os.path.exists(file_path):
+            file_path = generate_invoice_pdf(booking)
+
+        return file_path
