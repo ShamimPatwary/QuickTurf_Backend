@@ -36,3 +36,23 @@ class BookingFactory:
 
         paid_amount = min(paid_amount, total_amount)
         due_amount = total_amount - paid_amount
+
+
+        return Booking(
+            turf_id=turf_id,
+            sport_id=sport_id,
+            time_slot_id=time_slot.id,
+            customer_name=customer_name,
+            customer_phone=customer_phone,
+            customer_email=customer_email,
+            booking_date=booking_date,
+            notes=notes,
+            match_type=match_type,
+            transaction_id=transaction_id,
+            total_amount=total_amount,
+            discount_amount=discount_amount,
+            paid_amount=paid_amount,
+            due_amount=due_amount,
+            status=BookingStatus.UPCOMING,
+            payment_status=cls._resolve_payment_status(paid_amount, total_amount),
+        )
