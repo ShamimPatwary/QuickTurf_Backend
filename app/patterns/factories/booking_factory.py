@@ -12,3 +12,27 @@ class BookingFactory:
         if paid_amount >= total_amount:
             return PaymentStatus.PAID
         return PaymentStatus.PARTIAL
+
+
+    @classmethod
+    def create_booking(
+        cls,
+        turf_id: int,
+        sport_id: int,
+        time_slot: TimeSlot,
+        booking_date,
+        customer_name: str,
+        customer_phone: str,
+        customer_email: str | None,
+        paid_amount: float,
+        notes: str | None,
+        match_type: MatchType = MatchType.FRIENDLY,
+        transaction_id: str | None = None,
+        discount_percentage: float = 0,
+    ) -> Booking:
+        base_amount = time_slot.price
+        discount_amount = round(base_amount * (discount_percentage / 100), 2) if discount_percentage else 0
+        total_amount = max(base_amount - discount_amount, 0)
+
+        paid_amount = min(paid_amount, total_amount)
+        due_amount = total_amount - paid_amount
