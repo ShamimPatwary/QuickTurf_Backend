@@ -18,6 +18,7 @@ class TimeSlotUpdate(BaseModel):
     is_active: Optional[bool] = None
 
 
+
 class TimeSlotOut(BaseModel):
     id: int
     sport_id: int
