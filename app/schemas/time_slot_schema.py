@@ -11,6 +11,11 @@ class TimeSlotCreate(BaseModel):
     price: float
 
 
+class TimeSlotUpdate(BaseModel):
+    start_time: Optional[time] = None
+    end_time: Optional[time] = None
+    price: Optional[float] = None
+    is_active: Optional[bool] = None
 
 
 
