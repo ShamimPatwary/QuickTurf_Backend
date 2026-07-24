@@ -13,10 +13,12 @@ class TurfFactory:
             name=data.name,
             details=data.details,
             address=data.address,
-            
+            latitude=data.latitude,
+            longitude=data.longitude,
+            google_map_link=data.google_map_link,
         )
-    
-     @staticmethod
+
+    @staticmethod
     def create_turf_admin(turf_id: int, data: TurfCreate) -> TurfAdmin:
         return TurfAdmin(
             turf_id=turf_id,
