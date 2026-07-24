@@ -15,3 +15,11 @@ class TurfFactory:
             address=data.address,
             
         )
+    
+     @staticmethod
+    def create_turf_admin(turf_id: int, data: TurfCreate) -> TurfAdmin:
+        return TurfAdmin(
+            turf_id=turf_id,
+            email=data.turf_admin_email,
+            hashed_password=hash_password(data.turf_admin_password),
+        )
