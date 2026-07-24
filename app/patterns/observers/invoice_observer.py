@@ -8,3 +8,6 @@ class InvoiceObserver(BookingObserver):
 
     def on_booking_created(self, booking: Booking) -> None:
         generate_invoice_pdf(booking)
+
+        def on_booking_confirmed(self, booking: Booking) -> None:
+        pass
