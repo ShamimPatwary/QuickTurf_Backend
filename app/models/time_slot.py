@@ -9,8 +9,7 @@ class TimeSlot(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     sport_id = Column(Integer, ForeignKey("sports.id"), nullable=False)
-    start_time = Column(Time, nullable=False)
-    end_time = Column(Time, nullable=False)
+   
     price = Column(Float, nullable=False)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
