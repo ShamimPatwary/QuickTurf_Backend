@@ -31,3 +31,12 @@ def generate_invoice_pdf(booking: Booking) -> str:
         f"Payment Status: {booking.payment_status.value}",
         f"Notes: {booking.notes or '-'}",
     ]
+
+    
+    y = 760
+    for line in lines:
+        c.drawString(50, y, line)
+        y -= 25
+
+    c.save()
+    return file_path
