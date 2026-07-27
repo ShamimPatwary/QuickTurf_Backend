@@ -44,3 +44,37 @@ class MemberService(BaseService):
         self.member_repo.commit()
         self.member_repo.refresh(member)
         return member
+
+
+    def list_members(self, turf_admin: TurfAdmin) -> List[Member]:
+        return self.member_repo.list_by_turf(turf_admin.turf_id)
+
+    def get_member(self, turf_admin: TurfAdmin, member_id: int) -> Member:
+        member = self.member_repo.get_by_turf(member_id, turf_admin.turf_id)
+        if not member:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Member not found")
+        return member
+
+    def update_member_status(self, turf_admin: TurfAdmin, member_id: int, new_status: MemberStatus) -> Member:
+        member = self.get_member(turf_admin, member_id)
+
+        if new_status == MemberStatus.ACTIVE and member.status != MemberStatus.ACTIVE:
+            now = datetime.now(timezone.utc)
+            member.starts_at = now
+            member.expires_at = now + timedelta(days=member.membership.duration_days)
+
+        member.status = new_status
+        self.member_repo.commit()
+        self.member_repo.refresh(member)
+        return member
+
+    def check_membership_discount(self, turf_id: int, phone: str, sport_id: int) -> MembershipCheckResult:
+        """Looks up whether this phone number has an active membership covering this sport at this turf."""
+        member = self.member_repo.find_active_by_phone(turf_id, phone, sport_id)
+        if not member:
+            return MembershipCheckResult(is_member=False)
+        return MembershipCheckResult(
+            is_member=True,
+            discount_percentage=member.membership.discount_percentage,
+            membership_name=member.membership.name,
+        )
