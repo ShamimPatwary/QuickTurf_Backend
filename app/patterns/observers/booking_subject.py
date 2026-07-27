@@ -10,5 +10,13 @@ class BookingSubject:
     def __init__(self) -> None:
         self._observers: List[BookingObserver] = []
 
-      def attach(self, observer: BookingObserver) -> None:
+    def attach(self, observer: BookingObserver) -> None:
         self._observers.append(observer)
+    
+    def detach(self, observer: BookingObserver) -> None:
+        if observer in self._observers:
+            self._observers.remove(observer)
+
+    def notify_created(self, booking: Booking) -> None:
+        for observer in self._observers:
+            observer.on_booking_created(booking)
