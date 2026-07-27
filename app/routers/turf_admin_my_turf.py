@@ -8,3 +8,11 @@ from app.models.turf_admin import TurfAdmin
 from app.schemas.turf_schema import TurfPublicOut
 
 router = APIRouter(prefix="/api/turf-admin", tags=["Turf Admin - My Turf"])
+
+@router.get("/my-turf", response_model=TurfPublicOut)
+def get_my_turf(
+    turf_admin: TurfAdmin = Depends(get_current_turf_admin),
+    db: Session = Depends(get_db),
+):
+    turf = db.query(Turf).filter(Turf.id == turf_admin.turf_id).first()
+    return turf
