@@ -9,3 +9,6 @@ class BookingSubject:
 
     def __init__(self) -> None:
         self._observers: List[BookingObserver] = []
+
+      def attach(self, observer: BookingObserver) -> None:
+        self._observers.append(observer)
