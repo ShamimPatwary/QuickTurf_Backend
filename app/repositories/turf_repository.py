@@ -17,3 +17,9 @@ class TurfRepository(BaseRepository[Turf]):
         return image
 
     
+    def get_image(self, turf_id: int, image_id: int) -> Optional[TurfImage]:
+        return (
+            self.db.query(TurfImage)
+            .filter(TurfImage.id == image_id, TurfImage.turf_id == turf_id)
+            .first()
+        )
