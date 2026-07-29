@@ -29,3 +29,24 @@ class BookingRepository(BaseRepository[Booking]):
             .filter(Booking.id == booking_id, Booking.turf_id == turf_id)
             .first()
         )
+
+    def list_all_ordered(self) -> List[Booking]:
+        return (
+            self.db.query(Booking)
+            .options(joinedload(Booking.sport))
+            .order_by(Booking.created_at.desc())
+            .all()
+        )
+
+    def has_conflicting_booking(self, time_slot_id: int, booking_date: date) -> bool:
+        existing = (
+            self.db.query(Booking)
+            .filter(
+                Booking.time_slot_id == time_slot_id,
+                Booking.booking_date == booking_date,
+                Booking.status != BookingStatus.CANCELLED,
+            )
+            .with_for_update()
+            .first()
+        )
+        return existing is not None
