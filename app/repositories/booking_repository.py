@@ -50,7 +50,7 @@ class BookingRepository(BaseRepository[Booking]):
             .first()
         )
         return existing is not None
-        
+
     def booked_slot_ids(self, sport_id: int, booking_date: date) -> set:
         rows = (
             self.db.query(Booking)
@@ -62,3 +62,9 @@ class BookingRepository(BaseRepository[Booking]):
             .all()
         )
         return {b.time_slot_id for b in rows}
+    
+    def add_payment(self, booking_id: int, amount: float, method: Optional[str], transaction_id: Optional[str] = None) -> Payment:
+        payment = Payment(booking_id=booking_id, amount=amount, method=method, transaction_id=transaction_id)
+        self.db.add(payment)
+        self.db.flush()
+        return payment
