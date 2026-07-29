@@ -50,3 +50,15 @@ class BookingRepository(BaseRepository[Booking]):
             .first()
         )
         return existing is not None
+        
+    def booked_slot_ids(self, sport_id: int, booking_date: date) -> set:
+        rows = (
+            self.db.query(Booking)
+            .filter(
+                Booking.sport_id == sport_id,
+                Booking.booking_date == booking_date,
+                Booking.status != BookingStatus.CANCELLED,
+            )
+            .all()
+        )
+        return {b.time_slot_id for b in rows}
