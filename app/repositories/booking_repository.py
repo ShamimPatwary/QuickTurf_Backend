@@ -68,3 +68,34 @@ class BookingRepository(BaseRepository[Booking]):
         self.db.add(payment)
         self.db.flush()
         return payment
+    
+    def turf_aggregate_counts(self, turf_id: int) -> dict:
+        base_query = self.db.query(Booking).filter(Booking.turf_id == turf_id)
+
+        return {
+            "total_matches": base_query.count(),
+            "total_match_amount": base_query.with_entities(
+                func.coalesce(func.sum(Booking.total_amount), 0)
+            ).scalar(),
+            "paid_amount": base_query.with_entities(
+                func.coalesce(func.sum(Booking.paid_amount), 0)
+            ).scalar(),
+            "due_amount": base_query.with_entities(
+                func.coalesce(func.sum(Booking.due_amount), 0)
+            ).scalar(),
+            "upcoming_matches": base_query.filter(Booking.status == BookingStatus.UPCOMING).count(),
+            "completed_matches": base_query.filter(Booking.status == BookingStatus.COMPLETED).count(),
+            "cancelled_matches": base_query.filter(Booking.status == BookingStatus.CANCELLED).count(),
+            "payment_paid": base_query.filter(Booking.payment_status == PaymentStatus.PAID).count(),
+            "payment_partial": base_query.filter(Booking.payment_status == PaymentStatus.PARTIAL).count(),
+            "payment_pending": base_query.filter(Booking.payment_status == PaymentStatus.PENDING).count(),
+            "total_discount_given": base_query.with_entities(
+                func.coalesce(func.sum(Booking.discount_amount), 0)
+            ).scalar(),
+            "active_members": self.db.query(Member)
+            .filter(Member.turf_id == turf_id, Member.status == MemberStatus.ACTIVE)
+            .count(),
+            "pending_members": self.db.query(Member)
+            .filter(Member.turf_id == turf_id, Member.status == MemberStatus.PENDING)
+            .count(),
+        }
