@@ -40,3 +40,25 @@ class PublicTurfService(BaseService):
         if not turf:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Turf not found")
         return turf
+
+    def list_turf_sports(self, turf_id: int) -> List[Sport]:
+        return self.sport_repo.list_by_turf(turf_id)
+
+    def list_available_slots(self, turf_id: int, sport_id: int, booking_date: date) -> List[AvailableTimeSlotOut]:
+        sport = self.sport_repo.get_by_turf(sport_id, turf_id)
+        if not sport:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Sport not found for this turf")
+
+        time_slots = self.time_slot_repo.list_active_by_sport(sport_id)
+        booked_ids = self.booking_repo.booked_slot_ids(sport_id, booking_date)
+
+        return [
+            AvailableTimeSlotOut(
+                id=slot.id,
+                start_time=slot.start_time,
+                end_time=slot.end_time,
+                price=slot.price,
+                is_booked=slot.id in booked_ids,
+            )
+            for slot in time_slots
+        ]
