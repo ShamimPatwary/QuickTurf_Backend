@@ -78,8 +78,17 @@ class BookingService(BaseService):
 
     def list_turf_bookings(self, turf_id: int) -> List[Booking]:
         return self.booking_repo.list_by_turf(turf_id)
+    
     def get_turf_booking(self, turf_id: int, booking_id: int) -> Booking:
         booking = self.booking_repo.get_by_turf(booking_id, turf_id)
         if not booking:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Booking not found")
+        return booking
+
+    def update_booking(self, turf_id: int, booking_id: int, data: BookingUpdate) -> Booking:
+        booking = self.get_turf_booking(turf_id, booking_id)
+        for field, value in data.dict(exclude_unset=True).items():
+            setattr(booking, field, value)
+        self.booking_repo.commit()
+        self.booking_repo.refresh(booking)
         return booking
