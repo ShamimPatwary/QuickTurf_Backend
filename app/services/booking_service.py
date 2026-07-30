@@ -78,3 +78,8 @@ class BookingService(BaseService):
 
     def list_turf_bookings(self, turf_id: int) -> List[Booking]:
         return self.booking_repo.list_by_turf(turf_id)
+    def get_turf_booking(self, turf_id: int, booking_id: int) -> Booking:
+        booking = self.booking_repo.get_by_turf(booking_id, turf_id)
+        if not booking:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Booking not found")
+        return booking
