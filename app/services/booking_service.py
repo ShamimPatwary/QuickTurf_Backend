@@ -92,3 +92,8 @@ class BookingService(BaseService):
         self.booking_repo.commit()
         self.booking_repo.refresh(booking)
         return booking
+
+    def delete_booking(self, turf_id: int, booking_id: int) -> None:
+        booking = self.get_turf_booking(turf_id, booking_id)
+        self.booking_repo.delete(booking)
+        self.booking_repo.commit()
