@@ -25,3 +25,22 @@ class BookingService(BaseService):
         self.time_slot_repo = TimeSlotRepository(db)
         self.turf_repo = TurfRepository(db)
         self.member_repo = MemberRepository(db)
+    
+    def create_public_booking(self, data: PublicBookingCreate) -> Booking:
+        turf = self.turf_repo.get_by_id(data.turf_id)
+        if not turf or turf.status != TurfStatus.ACTIVE:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Turf not available for booking")
+
+        sport = self.sport_repo.get_by_turf(data.sport_id, data.turf_id)
+        if not sport:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Sport not found for this turf")
+
+        time_slot = self.time_slot_repo.get_locked(data.time_slot_id)
+        if not time_slot or not time_slot.is_active:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Time slot not available")
+
+        if self.booking_repo.has_conflicting_booking(data.time_slot_id, data.booking_date):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="This slot is already booked for the selected date",
+            )
