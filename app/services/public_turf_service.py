@@ -62,3 +62,11 @@ class PublicTurfService(BaseService):
             )
             for slot in time_slots
         ]
+
+    def list_turf_packages(self, turf_id: int, sport_id: Optional[int] = None) -> List[Package]:
+        if sport_id:
+            return self.package_repo.list_active_by_turf_and_sport(turf_id, sport_id)
+        return [p for p in self.package_repo.list_by_turf(turf_id) if p.is_active]
+
+    def list_turf_memberships(self, turf_id: int) -> List[Membership]:
+        return self.membership_repo.list_active_by_turf(turf_id)
