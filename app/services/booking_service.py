@@ -44,3 +44,37 @@ class BookingService(BaseService):
                 status_code=status.HTTP_409_CONFLICT,
                 detail="This slot is already booked for the selected date",
             )
+
+        # Automatic membership discount: looked up by phone number, scoped to this turf and sport.
+        active_member = self.member_repo.find_active_by_phone(data.turf_id, data.customer_phone, data.sport_id)
+        discount_percentage = active_member.membership.discount_percentage if active_member else 0
+
+        booking = BookingFactory.create_booking(
+            turf_id=data.turf_id,
+            sport_id=data.sport_id,
+            time_slot=time_slot,
+            booking_date=data.booking_date,
+            customer_name=data.customer_name,
+            customer_phone=data.customer_phone,
+            customer_email=data.customer_email,
+            paid_amount=data.paid_amount,
+            notes=data.notes,
+            match_type=data.match_type,
+            transaction_id=data.transaction_id,
+            discount_percentage=discount_percentage,
+        )
+
+        self.booking_repo.add(booking)
+
+        if booking.paid_amount > 0:
+            self.booking_repo.add_payment(booking.id, booking.paid_amount, "initial", data.transaction_id)
+
+        self.booking_repo.commit()
+        self.booking_repo.refresh(booking)
+
+        booking_subject.notify_created(booking)
+
+        return booking
+
+    def list_turf_bookings(self, turf_id: int) -> List[Booking]:
+        return self.booking_repo.list_by_turf(turf_id)
