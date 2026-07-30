@@ -97,3 +97,35 @@ class BookingService(BaseService):
         booking = self.get_turf_booking(turf_id, booking_id)
         self.booking_repo.delete(booking)
         self.booking_repo.commit()
+
+    def add_payment(
+        self, turf_id: int, booking_id: int, amount: float, method: Optional[str], transaction_id: Optional[str] = None
+    ) -> Booking:
+        booking = self.get_turf_booking(turf_id, booking_id)
+
+        new_paid = min(booking.paid_amount + amount, booking.total_amount)
+        booking.paid_amount = new_paid
+        booking.due_amount = booking.total_amount - new_paid
+
+        if booking.paid_amount >= booking.total_amount:
+            booking.payment_status = PaymentStatus.PAID
+        elif booking.paid_amount > 0:
+            booking.payment_status = PaymentStatus.PARTIAL
+        else:
+            booking.payment_status = PaymentStatus.PENDING
+
+        if transaction_id:
+            booking.transaction_id = transaction_id
+
+        self.booking_repo.add_payment(booking.id, amount, method, transaction_id)
+        self.booking_repo.commit()
+        self.booking_repo.refresh(booking)
+        return booking
+
+    def confirm_booking(self, turf_id: int, booking_id: int) -> Booking:
+        booking = self.get_turf_booking(turf_id, booking_id)
+        booking_subject.notify_confirmed(booking)
+        return booking
+
+    def list_all_bookings_for_platform(self) -> List[Booking]:
+        return self.booking_repo.list_all_ordered()
