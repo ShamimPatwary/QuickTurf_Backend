@@ -48,3 +48,26 @@ class TurfService(BaseService):
         self.turf_repo.commit()
         self.turf_repo.refresh(turf)
         return turf
+
+    def delete_turf(self, turf_id: int) -> None:
+        turf = self.get_turf(turf_id)
+        self.turf_repo.delete(turf)
+        self.turf_repo.commit()
+
+    def update_turf_status(self, turf_id: int, status_value: TurfStatus, subscription_due_date=None) -> Turf:
+        turf = self.get_turf(turf_id)
+        turf.status = status_value
+        if subscription_due_date is not None:
+            turf.subscription_due_date = subscription_due_date
+        self.turf_repo.commit()
+        self.turf_repo.refresh(turf)
+        return turf
+
+    def add_turf_image(self, turf_id: int, image_url: str) -> TurfImage:
+        self.get_turf(turf_id)
+        image = self.turf_repo.add_image(turf_id, image_url)
+        self.turf_repo.commit()
+        self.turf_repo.refresh(image)
+        return image
+
+    
