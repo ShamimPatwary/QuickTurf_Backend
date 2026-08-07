@@ -70,4 +70,15 @@ class TurfService(BaseService):
         self.turf_repo.refresh(image)
         return image
 
+    def delete_turf_image(self, turf_id: int, image_id: int) -> None:
+        image = self.turf_repo.get_image(turf_id, image_id)
+        if not image:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Image not found")
+        self.turf_repo.delete_image(image)
+        self.turf_repo.commit()
+
+    def list_active_turfs(self) -> List[Turf]:
+        return self.turf_repo.list_active()
+
+
     
