@@ -31,3 +31,20 @@ class TurfService(BaseService):
         self.turf_repo.commit()
         self.turf_repo.refresh(turf)
         return turf
+
+    def list_turfs(self) -> List[Turf]:
+        return self.turf_repo.list_all()
+
+    def get_turf(self, turf_id: int) -> Turf:
+        turf = self.turf_repo.get_by_id(turf_id)
+        if not turf:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Turf not found")
+        return turf
+
+    def update_turf(self, turf_id: int, data: TurfUpdate) -> Turf:
+        turf = self.get_turf(turf_id)
+        for field, value in data.dict(exclude_unset=True).items():
+            setattr(turf, field, value)
+        self.turf_repo.commit()
+        self.turf_repo.refresh(turf)
+        return turf
