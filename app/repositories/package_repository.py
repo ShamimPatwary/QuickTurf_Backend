@@ -14,6 +14,10 @@ class PackageRepository(BaseRepository[Package]):
     def get_by_turf(self, package_id: int, turf_id: int) -> Optional[Package]:
         return self.db.query(Package).filter(Package.id == package_id, Package.turf_id == turf_id).first()
 
+    def get_sports_by_ids(self, sport_ids: List[int], turf_id: int) -> List[Sport]:
+        if not sport_ids:
+            return []
+        return self.db.query(Sport).filter(Sport.id.in_(sport_ids), Sport.turf_id == turf_id).all()
     
     def list_active_by_turf_and_sport(self, turf_id: int, sport_id: int) -> List[Package]:
         return (
