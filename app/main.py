@@ -3,11 +3,15 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from app.services.subscription_service import suspend_expired_turfs
+from apscheduler.schedulers.background import BackgroundScheduler
+
 
 from app.config import settings
 from app.patterns import observers  # noqa: F401 - registers concrete observers on import
 from app.routers import (
     invoice,
+    payment,
     platform_admin_auth,
     platform_admin_bookings,
     platform_admin_turfs,
@@ -19,6 +23,7 @@ from app.routers import (
     turf_admin_dashboard,
     turf_admin_members,
     turf_admin_memberships,
+    turf_admin_my_turf,
     turf_admin_packages,
     turf_admin_sports,
     turf_admin_time_slots,
@@ -42,6 +47,7 @@ app.include_router(platform_admin_auth.router)
 app.include_router(platform_admin_turfs.router)
 app.include_router(platform_admin_bookings.router)
 
+app.include_router(turf_admin_my_turf.router)
 app.include_router(turf_admin_auth.router)
 app.include_router(turf_admin_sports.router)
 app.include_router(turf_admin_time_slots.router)
@@ -55,8 +61,31 @@ app.include_router(public_turfs.router)
 app.include_router(public_bookings.router)
 app.include_router(public_members.router)
 
+app.include_router(payment.router)
 app.include_router(invoice.router)
 
+
+# ── Subscription scheduler ────────────────────────────────────────────────────
+scheduler = BackgroundScheduler(timezone="Asia/Dhaka")
+ 
+scheduler.add_job(
+    suspend_expired_turfs,
+    trigger="cron",
+    hour=0,
+    minute=5,
+    id="suspend_expired_turfs",
+    replace_existing=True,
+)
+ 
+ 
+@app.on_event("startup")
+def start_scheduler():
+    scheduler.start()
+ 
+ 
+@app.on_event("shutdown")
+def stop_scheduler():
+    scheduler.shutdown(wait=False)
 
 @app.get("/")
 def root():
