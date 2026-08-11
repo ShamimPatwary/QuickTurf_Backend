@@ -27,6 +27,7 @@ class SportService(BaseService):
         self.sport_repo.refresh(sport)
         return sport
 
-    
+    def list_sports(self, turf_admin: TurfAdmin) -> List[Sport]:
+        return self.sport_repo.list_by_turf(turf_admin.turf_id)
 
 
