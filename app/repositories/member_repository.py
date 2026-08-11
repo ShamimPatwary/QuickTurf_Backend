@@ -36,3 +36,17 @@ class MemberRepository(BaseRepository[Member]):
             )
             .first()
         )
+
+    def count_by_status(self, turf_id: int, status: MemberStatus) -> int:
+        return self.db.query(Member).filter(Member.turf_id == turf_id, Member.status == status).count()
+
+    def sum_discount_given(self, turf_id: int) -> float:
+        from app.models.booking import Booking
+        from sqlalchemy import func
+
+        result = (
+            self.db.query(func.coalesce(func.sum(Booking.discount_amount), 0))
+            .filter(Booking.turf_id == turf_id)
+            .scalar()
+        )
+        return result or 0
