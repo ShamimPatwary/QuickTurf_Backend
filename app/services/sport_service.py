@@ -30,4 +30,20 @@ class SportService(BaseService):
     def list_sports(self, turf_admin: TurfAdmin) -> List[Sport]:
         return self.sport_repo.list_by_turf(turf_admin.turf_id)
 
+    def update_sport(self, turf_admin: TurfAdmin, sport_id: int, data: SportUpdate) -> Sport:
+        sport = self.sport_repo.get_by_turf(sport_id, turf_admin.turf_id)
+        if not sport:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Sport not found")
+        for field, value in data.dict(exclude_unset=True).items():
+            setattr(sport, field, value)
+        self.sport_repo.commit()
+        self.sport_repo.refresh(sport)
+        return sport
+
+    def delete_sport(self, turf_admin: TurfAdmin, sport_id: int) -> None:
+        sport = self.sport_repo.get_by_turf(sport_id, turf_admin.turf_id)
+        if not sport:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Sport not found")
+        self.sport_repo.delete(sport)
+        self.sport_repo.commit()
 
