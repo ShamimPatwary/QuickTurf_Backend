@@ -1,21 +1,21 @@
-import os
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-from app.services.subscription_service import suspend_expired_turfs
-from apscheduler.schedulers.background import BackgroundScheduler
 
-
-from app.config import settings
 from app.patterns import observers  # noqa: F401 - registers concrete observers on import
+from app.services.auth_service import seed_default_admin
+from app.utils.migrate import run_migrations
 from app.routers import (
+    cron,
     invoice,
     payment,
     platform_admin_auth,
     platform_admin_bookings,
+    platform_admin_contacts,
     platform_admin_turfs,
     public_bookings,
+    public_contacts,
     public_members,
     public_turfs,
     turf_admin_auth,
@@ -29,9 +29,24 @@ from app.routers import (
     turf_admin_time_slots,
 )
 
-os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Ensure the DB schema is up to date (applies pending Alembic migrations,
+    # e.g. the contact_messages table) before any data seeding. On Vercel
+    # serverless this may not always run, so it is guarded and non-fatal.
+    run_migrations()
+    # Idempotently ensure the default platform admin exists (local/dev).
+    # On Vercel serverless this may not always run, so authenticate_admin()
+    # also seeds defensively on first login.
+    try:
+        seed_default_admin()
+    except Exception:
+        # Never block app startup on a seeding failure (e.g. DB down).
+        pass
+    yield
 
-app = FastAPI(title="QuickTurf API")
+
+app = FastAPI(title="QuickTurf API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -40,8 +55,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-app.mount(f"/{settings.UPLOAD_DIR}", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
 
 app.include_router(platform_admin_auth.router)
 app.include_router(platform_admin_turfs.router)
@@ -60,32 +73,14 @@ app.include_router(turf_admin_dashboard.router)
 app.include_router(public_turfs.router)
 app.include_router(public_bookings.router)
 app.include_router(public_members.router)
+app.include_router(public_contacts.router)
+
+app.include_router(platform_admin_contacts.router)
 
 app.include_router(payment.router)
 app.include_router(invoice.router)
 
-
-# ── Subscription scheduler ────────────────────────────────────────────────────
-scheduler = BackgroundScheduler(timezone="Asia/Dhaka")
- 
-scheduler.add_job(
-    suspend_expired_turfs,
-    trigger="cron",
-    hour=0,
-    minute=5,
-    id="suspend_expired_turfs",
-    replace_existing=True,
-)
- 
- 
-@app.on_event("startup")
-def start_scheduler():
-    scheduler.start()
- 
- 
-@app.on_event("shutdown")
-def stop_scheduler():
-    scheduler.shutdown(wait=False)
+app.include_router(cron.router)
 
 @app.get("/")
 def root():
